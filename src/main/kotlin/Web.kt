@@ -1,3 +1,4 @@
+import com.xap4o.kwony.utils.endWithJson
 import io.vertx.core.Vertx
 import io.vertx.core.http.HttpMethod
 import io.vertx.core.http.HttpServerResponse
@@ -21,8 +22,4 @@ fun main(args: Array<String>) {
     }
 
     server.requestHandler(router::accept).listen(8080)
-}
-
-fun HttpServerResponse.endWithJson(obj: Any) {
-    this.putHeader("Content-Type", "application/json; charset=utf-8").end(Json.encodePrettily(obj))
 }

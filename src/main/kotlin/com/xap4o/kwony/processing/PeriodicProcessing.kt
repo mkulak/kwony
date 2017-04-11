@@ -13,10 +13,9 @@ class PeriodicProcessing(
         resultDb: AnalyzeResultDb,
         keywordsDb: SearchKeywordsDb) : Logging {
 
-    fun start(): Cancellable {
+    fun start() {
 //    val task = new Runnable { override def run(): Unit = process()}
 //    implicitly[ActorSystem].scheduler.schedule(0.seconds, config.interval, task)
-        TODO()
     }
 
     fun process(): Unit {

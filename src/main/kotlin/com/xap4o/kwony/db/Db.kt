@@ -13,6 +13,7 @@ object Db {
     fun migrate(config: DbConfig): Unit {
         val flyway = Flyway()
         flyway.setDataSource(config.url, config.user, config.password)
+//        flyway.clean()
         flyway.migrate()
     }
 
