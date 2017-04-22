@@ -2,22 +2,22 @@ package com.xap4o.kwony.processing
 
 import com.xap4o.kwony.config.ProcessingConfig
 import com.xap4o.kwony.http.HttpClient
+import com.xap4o.kwony.http.HttpRequest
+import com.xap4o.kwony.http.Json
 import com.xap4o.kwony.twitter.Tweet
-import java.util.concurrent.Future
+import io.vertx.core.Future
+import io.vertx.core.http.HttpMethod
 
 interface AnalyzerClient {
     fun analyze(tweet: Tweet): Future<Boolean>
 }
 
-class AnalyzerClientImpl(config: ProcessingConfig, http: HttpClient) : AnalyzerClient {
+class AnalyzerClientImpl(val config: ProcessingConfig, val http: HttpClient) : AnalyzerClient {
 
     override fun analyze(tweet: Tweet): Future<Boolean> {
-//    val req: HttpRequest = HttpRequest()
-//      .withUri(s"${config.analyzeHost}/analyze")
-//      .withMethod(HttpMethods.POST)
-//      .withEntity(HttpEntity(ContentTypes.`application/json`, tweet.toJson.compactPrint))
-//
-//    http.make[Boolean](req, config.timeout)
-        TODO()
+        val req = HttpRequest("${config.analyzeHost}/analyze", HttpMethod.POST)
+                .withBody(Json(tweet))
+                .withTimeout(config.timeout)
+        return http.make(req, Boolean::class.java)
     }
 }

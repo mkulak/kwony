@@ -1,9 +1,12 @@
 package com.xap4o.kwony.twitter
 
 import com.xap4o.kwony.config.ProcessingConfig
+import com.xap4o.kwony.http.Form
 import com.xap4o.kwony.http.HttpClient
+import com.xap4o.kwony.http.HttpRequest
 import com.xap4o.kwony.utils.Logging
-import java.util.concurrent.Future
+import io.vertx.core.Future
+import io.vertx.core.http.HttpMethod
 
 
 interface TwitterClient {
@@ -11,28 +14,22 @@ interface TwitterClient {
   fun search(token: Token, keyword: String): Future<SearchResponse>
 }
 
-class TwitterClientImpl(config: ProcessingConfig, http: HttpClient) : TwitterClient, Logging {
-//  val contentType = ContentType(MediaType.applicationWithFixedCharset("x-www-form-urlencoded", HttpCharsets.`UTF-8`))
+class TwitterClientImpl(val config: ProcessingConfig, val http: HttpClient) : TwitterClient, Logging {
 
   override fun open(): Future<Token> {
-//    val req: HttpRequest = HttpRequest()
-//      .withUri(s"${config.twitterHost}/oauth2/token")
-//      .withMethod(HttpMethods.POST)
-//      .withHeaders(Authorization(BasicHttpCredentials(config.twitterKey, config.twitterSecret)))
-//      .withEntity(HttpEntity(contentType, "grant_type=client_credentials"))
-//
-//    http.make<AuthResponse>(req, config.timeout).rightMap(r => Token(r.accessToken))
-      TODO()
+      val req = HttpRequest("${config.twitterHost}/oauth2/token", HttpMethod.POST)
+              .withBody(Form(mapOf("grant_type" to "client_credentials")))
+              .withTimeout(config.timeout)
+              .withBasicAuth(config.twitterKey, config.twitterSecret)
+      return http.make(req, AuthResponse::class.java).map { Token(it.accessToken) }
   }
 
   override fun search(token: Token, keyword: String): Future<SearchResponse> {
-//    val req: HttpRequest = HttpRequest()
-//      .withUri(Uri("${config.twitterHost}/1.1/search/tweets.json").withQuery(Query("q" -> keyword)))
-//      .withMethod(HttpMethods.GET)
-//      .withHeaders(Authorization(OAuth2BearerToken(token.value)))
-//
-//    return http.make<SearchResponse>(req, config.timeout)
-      TODO()
+      val req = HttpRequest("${config.twitterHost}/1.1/search/tweets.json")
+              .withParams(mapOf("q" to keyword))
+              .withTimeout(config.timeout)
+              .withOAuth2(token.value)
+      return http.make(req, SearchResponse::class.java)
   }
 }
 
