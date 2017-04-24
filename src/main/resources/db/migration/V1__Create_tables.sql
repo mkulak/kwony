@@ -17,5 +17,5 @@ CREATE TABLE search_keyword (
   UNIQUE (value)
 );
 
-INSERT INTO search_keyword(value) VALUES('trump')
-INSERT INTO search_keyword(value) VALUES('scala')
+INSERT INTO search_keyword(value) VALUES('trump');
+INSERT INTO search_keyword(value) VALUES('scala');

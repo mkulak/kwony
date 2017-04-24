@@ -61,6 +61,7 @@ class HttpClientImpl(val webClient: WebClient) : HttpClient {
         val port = if (url.port == -1) url.defaultPort else url.port
         val vertxReq = webClient.request(req.method, port, url.host, url.path)
         req.params.forEach { (name, value) -> vertxReq.addQueryParam(name, value) }
+        req.headers.forEach { (name, value) -> vertxReq.putHeader(name, value) }
         when (req.body) {
             is Empty -> vertxReq.send(::handler)
             is Json -> vertxReq.sendJson(req.body.payload, ::handler)

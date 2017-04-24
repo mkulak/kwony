@@ -1,3 +1,21 @@
+POST /oauth2/token HTTP/1.1
+User-Agent: Vert.x-WebClient/3.4.1
+Authorization: Basic emxMZG5XQkpUb0Q5anVoanVnY0Z1ZDhINDpEQTJ4U3d3ckxrTUNIVDVSN3JOejltaVp0S0xlRnFCM213TFJFMHlHMVhDN0gxaU9NZg==
+content-type: application/x-www-form-urlencoded
+content-length: 29
+Host: localhost:8080
+
+grant_type=client_credentials✓ $ nc -l 8080
+POST /oauth2/token HTTP/1.1
+Host: localhost:8080
+Authorization: Basic emxMZG5XQkpUb0Q5anVoanVnY0Z1ZDhINDpEQTJ4U3d3ckxrTUNIVDVSN3JOejltaVp0S0xlRnFCM213TFJFMHlHMVhDN0gxaU9NZg==
+User-Agent: akka-http/2.4.11
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 29
+
+grant_type=client_credentials
+
+
 Hey
 I'm thinking of giving a talk about coroutines on next Kotlin Meetup (10-15 minutes live coding session).
 But I found out that next meetup will be special because of Jetbrains talks. Maybe I should postpone my talk (people will be overwhelmed with info anyway).

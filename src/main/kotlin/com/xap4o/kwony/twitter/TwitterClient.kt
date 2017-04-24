@@ -22,6 +22,7 @@ class TwitterClientImpl(val config: ProcessingConfig, val http: HttpClient) : Tw
               .withBody(Form(mapOf("grant_type" to "client_credentials")))
               .withTimeout(config.timeout)
               .withBasicAuth(config.twitterKey, config.twitterSecret)
+              .withHeader("Content-Type" to "x-www-form-urlencoded; charset=utf-8")
       return http.make(req, AuthResponse::class.java).map { Token(it.accessToken) }
   }
 
