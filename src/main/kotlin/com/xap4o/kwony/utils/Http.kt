@@ -1,11 +1,10 @@
 package com.xap4o.kwony.utils
 
-import io.vertx.core.Future
 import io.vertx.core.MultiMap
 import io.vertx.core.http.HttpServerResponse
 import io.vertx.core.json.Json
 import java.util.Base64
-import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.CompletableFuture
 
 fun HttpServerResponse.endWithJson(obj: Any) {
     this.putHeader("Content-Type", "application/json; charset=utf-8").end(Json.encodePrettily(obj))
@@ -25,39 +24,40 @@ fun basicAuthHeader(name: String, password: String): Pair<String, String> =
 fun oauth2Header(token: String): Pair<String, String> =
         "Authorization" to "Bearer $token"
 
-fun <T> List<Future<T>>.gatherUnordered(): Future<List<T>> {
-    val results = ConcurrentLinkedQueue<T>()
-    val future = Future.future<List<T>>()
-    fun addResult(t: T) {
-        results.add(t)
-        if (results.size == size) {  //TODO: fix race condition
-            future.complete(results.toList())
-        }
+fun <T> List<CompletableFuture<T>>.gatherUnordered(): CompletableFuture<List<T>> {
+    return CompletableFuture.allOf(*this.toTypedArray()).thenApply { _ -> this.map { it.join()} }
+}
+
+fun <T> CompletableFuture<T>.materialize(): CompletableFuture<Try<T>> {
+    val future = CompletableFuture<Try<T>>()
+    handle { result, throwable ->
+        future.complete(if (throwable != null) Failure(throwable) else Success(result))
     }
-    forEach {
-        it.setHandler { res ->
-            if (res.succeeded()) {
-                addResult(res.result())
-            } else {
-                future.fail(res.cause())
-            }
+    return future
+}
+fun <T> CompletableFuture<Try<T>>.dematerialize(): CompletableFuture<T> {
+    val future = CompletableFuture<T>()
+    this.thenApply {
+        when (it) {
+            is Success<T> -> future.complete(it.value)
+            is Failure<*> -> future.completeExceptionally(it.error)
         }
     }
     return future
 }
 
-fun <T> Future<T>.materialize(): Future<Try<T>> {
-    val future = Future.future<Try<T>>()
-    setHandler {
-        future.complete(if (it.succeeded()) Success(it.result()) else Failure(it.cause()))
-    }
-    return future
-}
+fun <A, B> CompletableFuture<A>.map(f: (A) -> B): CompletableFuture<B> = thenApply(f)
 
-//fun <A, B> Future<A>.flatMap(f: (A) -> Future<B>): Future<B> = compose(f)
+fun <A, B> CompletableFuture<A>.flatMap(f: (A) -> CompletableFuture<B>): CompletableFuture<B> = thenCompose(f)
 
 sealed class Try<T> {
     abstract fun isSuccess(): Boolean
+
+    fun onError(f: (Throwable) -> Unit) = if (this is Failure) f(error) else Unit
+
+    companion object {
+        operator fun <T> invoke(f: () -> T): Try<T> = try { Success(f()) } catch (e: Throwable) { Failure(e) }
+    }
 }
 data class Success<T>(val value: T) : Try<T>() {
     override fun isSuccess() = true

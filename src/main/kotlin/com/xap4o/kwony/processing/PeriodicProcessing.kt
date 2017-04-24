@@ -3,7 +3,13 @@ package com.xap4o.kwony.processing
 import com.xap4o.kwony.config.ProcessingConfig
 import com.xap4o.kwony.db.AnalyzeResultDb
 import com.xap4o.kwony.db.SearchKeywordsDb
+import com.xap4o.kwony.utils.Failure
 import com.xap4o.kwony.utils.Logging
+import com.xap4o.kwony.utils.Success
+import com.xap4o.kwony.utils.Try
+import com.xap4o.kwony.utils.gatherUnordered
+import com.xap4o.kwony.utils.map
+import com.xap4o.kwony.utils.materialize
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.TimeUnit
@@ -19,16 +25,27 @@ class PeriodicProcessing(
     fun start(): ScheduledFuture<*> =
             pool.scheduleAtFixedRate(this::process, 0, config.interval.toMillis(), TimeUnit.MILLISECONDS)
 
-    fun process(): Unit {
-        keywordsDb.getAll().map { keyword ->
-            job.process(keyword).setHandler { result ->  //TODO: beautify
-                if (result.succeeded()) {
-                    val value = result.result()
-                    LOG.info(value.toString())
-                    resultDb.persist(value)
-                } else {
-                    LOG.error("Error while processing:", result.cause())
+    private fun process(): Unit {
+        Try {
+            println("process")
+            keywordsDb.getAll().map { keyword ->
+                println("process $keyword")
+                job.process(keyword).materialize()
+            }.gatherUnordered().map(this::handleResults)
+        }.onError {
+            it.printStackTrace()
+        }
+    }
+
+    private fun handleResults(results: List<Try<AnalyzeResult>>) {
+        results.forEach {
+            when(it) {
+                is Success -> {
+                    LOG.info(it.value.toString())
+                    resultDb.persist(it.value)
                 }
+                is Failure ->
+                    LOG.error("Error while processing:", it.error)
             }
         }
     }

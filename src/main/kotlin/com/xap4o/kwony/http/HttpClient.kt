@@ -1,16 +1,19 @@
 package com.xap4o.kwony.http
 
 import com.xap4o.kwony.utils.basicAuthHeader
+import com.xap4o.kwony.utils.dematerialize
+import com.xap4o.kwony.utils.map
+import com.xap4o.kwony.utils.materialize
 import com.xap4o.kwony.utils.oauth2Header
 import com.xap4o.kwony.utils.toMultiMap
 import io.vertx.core.AsyncResult
-import io.vertx.core.Future
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpMethod
 import io.vertx.ext.web.client.HttpResponse
 import io.vertx.ext.web.client.WebClient
 import java.net.URL
 import java.time.Duration
+import java.util.concurrent.CompletableFuture
 
 
 data class HttpRequest(
@@ -43,28 +46,34 @@ object Empty : HttpEntity()
 
 
 interface HttpClient {
-    fun execute(req: HttpRequest): Future<HttpResponse<Buffer>>
-    fun <T> make(req: HttpRequest, expected: Class<T>): Future<T>
+    fun execute(req: HttpRequest): CompletableFuture<HttpResponse<Buffer>>
+    fun <T> make(req: HttpRequest, expected: Class<T>): CompletableFuture<T>
 }
 
 class HttpClientImpl(val webClient: WebClient) : HttpClient {
-    override fun execute(req: HttpRequest): Future<HttpResponse<Buffer>> {
-        val future = Future.future<HttpResponse<Buffer>>()
-        fun handler(res: AsyncResult<HttpResponse<Buffer>>) =
-                if (res.succeeded()) future.complete(res.result()) else future.fail(res.cause())
+    override fun execute(req: HttpRequest): CompletableFuture<HttpResponse<Buffer>> {
+        val future = CompletableFuture<HttpResponse<Buffer>>()
+        fun handler(res: AsyncResult<HttpResponse<Buffer>>) {
+            if (res.succeeded()) future.complete(res.result()) else future.completeExceptionally(res.cause())
+        }
 
         val url = URL(req.url)
-        val vertxReq = webClient.request(req.method, url.port, url.host, url.path)
+        val port = if (url.port == -1) url.defaultPort else url.port
+        val vertxReq = webClient.request(req.method, port, url.host, url.path)
         req.params.forEach { (name, value) -> vertxReq.addQueryParam(name, value) }
         when (req.body) {
             is Empty -> vertxReq.send(::handler)
             is Json -> vertxReq.sendJson(req.body.payload, ::handler)
             is Form -> vertxReq.sendForm(req.body.params.toMultiMap(), ::handler)
         }
-        return future
+        println("making: $req port $port")
+        return future.materialize().map {
+            println("got response: $it")
+            it
+        }.dematerialize()
     }
 
-    override fun <T> make(req: HttpRequest, expected: Class<T>): Future<T> =
+    override fun <T> make(req: HttpRequest, expected: Class<T>): CompletableFuture<T> =
             execute(req).map { it.bodyAsJson(expected) }
 
 }

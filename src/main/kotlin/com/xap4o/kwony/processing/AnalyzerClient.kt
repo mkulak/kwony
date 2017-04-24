@@ -5,16 +5,16 @@ import com.xap4o.kwony.http.HttpClient
 import com.xap4o.kwony.http.HttpRequest
 import com.xap4o.kwony.http.Json
 import com.xap4o.kwony.twitter.Tweet
-import io.vertx.core.Future
 import io.vertx.core.http.HttpMethod
+import java.util.concurrent.CompletableFuture
 
 interface AnalyzerClient {
-    fun analyze(tweet: Tweet): Future<Boolean>
+    fun analyze(tweet: Tweet): CompletableFuture<Boolean>
 }
 
 class AnalyzerClientImpl(val config: ProcessingConfig, val http: HttpClient) : AnalyzerClient {
 
-    override fun analyze(tweet: Tweet): Future<Boolean> {
+    override fun analyze(tweet: Tweet): CompletableFuture<Boolean> {
         val req = HttpRequest("${config.analyzeHost}/analyze", HttpMethod.POST)
                 .withBody(Json(tweet))
                 .withTimeout(config.timeout)

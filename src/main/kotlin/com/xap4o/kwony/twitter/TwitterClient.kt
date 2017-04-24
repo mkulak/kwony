@@ -5,18 +5,19 @@ import com.xap4o.kwony.http.Form
 import com.xap4o.kwony.http.HttpClient
 import com.xap4o.kwony.http.HttpRequest
 import com.xap4o.kwony.utils.Logging
-import io.vertx.core.Future
+import com.xap4o.kwony.utils.map
 import io.vertx.core.http.HttpMethod
+import java.util.concurrent.CompletableFuture
 
 
 interface TwitterClient {
-  fun open(): Future<Token>
-  fun search(token: Token, keyword: String): Future<SearchResponse>
+  fun open(): CompletableFuture<Token>
+  fun search(token: Token, keyword: String): CompletableFuture<SearchResponse>
 }
 
 class TwitterClientImpl(val config: ProcessingConfig, val http: HttpClient) : TwitterClient, Logging {
 
-  override fun open(): Future<Token> {
+  override fun open(): CompletableFuture<Token> {
       val req = HttpRequest("${config.twitterHost}/oauth2/token", HttpMethod.POST)
               .withBody(Form(mapOf("grant_type" to "client_credentials")))
               .withTimeout(config.timeout)
@@ -24,7 +25,8 @@ class TwitterClientImpl(val config: ProcessingConfig, val http: HttpClient) : Tw
       return http.make(req, AuthResponse::class.java).map { Token(it.accessToken) }
   }
 
-  override fun search(token: Token, keyword: String): Future<SearchResponse> {
+  override fun search(token: Token, keyword: String): CompletableFuture<SearchResponse> {
+      println("search: $token $keyword")
       val req = HttpRequest("${config.twitterHost}/1.1/search/tweets.json")
               .withParams(mapOf("q" to keyword))
               .withTimeout(config.timeout)

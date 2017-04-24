@@ -5,9 +5,11 @@ import com.xap4o.kwony.twitter.TwitterClient
 import com.xap4o.kwony.utils.CreateTimer
 import com.xap4o.kwony.utils.Logging
 import com.xap4o.kwony.utils.Success
+import com.xap4o.kwony.utils.flatMap
 import com.xap4o.kwony.utils.gatherUnordered
+import com.xap4o.kwony.utils.map
 import com.xap4o.kwony.utils.materialize
-import io.vertx.core.Future
+import java.util.concurrent.CompletableFuture
 
 
 class AnalyzeJob(
@@ -15,12 +17,15 @@ class AnalyzeJob(
         val analyzerClient: AnalyzerClient,
         val createTimer: CreateTimer) : Logging {
 
-    fun process(query: String): Future<AnalyzeResult> {
+    fun process(query: String): CompletableFuture<AnalyzeResult> {
         val timer = createTimer()
+        println("created timer for $query")
         return twitterClient
                 .open()
-                .compose { twitterClient.search(it, query) }
-                .compose { searchResult: SearchResponse ->
+                .flatMap {
+                    println("token: $it")
+                    twitterClient.search(it, query)
+                }.flatMap { searchResult: SearchResponse ->
                     searchResult.tweets.map(analyzerClient::analyze).map { it.materialize() }.gatherUnordered().map { results ->
                         val (success, failures) = results.partition { it.isSuccess() }
                         val positiveCount = success.count { (it as Success<Boolean>).value }
