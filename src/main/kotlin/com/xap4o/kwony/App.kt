@@ -9,12 +9,9 @@ import com.xap4o.kwony.http.HttpClientImpl
 import com.xap4o.kwony.http.KeywordsServer
 import com.xap4o.kwony.processing.AnalyzeJob
 import com.xap4o.kwony.processing.AnalyzerClientImpl
+import com.xap4o.kwony.processing.PeriodicProcessing
 import com.xap4o.kwony.twitter.TwitterClientImpl
-import com.xap4o.kwony.utils.Failure
-import com.xap4o.kwony.utils.Success
 import com.xap4o.kwony.utils.Timer
-import com.xap4o.kwony.utils.map
-import com.xap4o.kwony.utils.materialize
 import io.vertx.core.Vertx
 import io.vertx.ext.web.Router
 import io.vertx.ext.web.client.WebClient
@@ -40,31 +37,9 @@ fun main(args: Array<String>): Unit {
     AnalyzerServer.api(router)
     keywordsServer.api(router)
 
-
-//    launch(CommonPool) {
-//        delay(1000)
-//        val f = httpClient.make(HttpRequest("http://localhost:8080/search_keywords", HttpMethod.GET), List::class.java)
-//        f.map {
-//            println(it)
-//        }
-//    }
     println("starting")
-    twitterClient.open().materialize().map {
-        when (it) {
-            is Failure -> println(it.error)
-            is Success -> println(it.value)
-        }
-    }
-//    val req = HttpRequest("${config.processing.twitterHost}/oauth2/token", HttpMethod.POST)
-//            .withBody(Form(mapOf("grant_type" to "client_credentials")))
-//            .withTimeout(config.processing.timeout)
-//            .withBasicAuth(config.processing.twitterKey, config.processing.twitterSecret)
-//            .withHeader("Content-Type" to "x-www-form-urlencoded; charset=utf-8")
-//
-//    httpClient.make(req, AuthResponse::class.java)
-//    PeriodicProcessing(job, config.processing, resultsDb, keywordsDb, pool).start()
-//    vertx.createHttpServer().requestHandler(router::accept).listen(config.http.port)
-
+    PeriodicProcessing(job, config.processing, resultsDb, keywordsDb, pool).start()
+    vertx.createHttpServer().requestHandler(router::accept).listen(config.http.port)
 }
 
 

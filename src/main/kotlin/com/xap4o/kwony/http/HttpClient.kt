@@ -60,6 +60,7 @@ class HttpClientImpl(val webClient: WebClient) : HttpClient {
         val url = URL(req.url)
         val port = if (url.port == -1) url.defaultPort else url.port
         val vertxReq = webClient.request(req.method, port, url.host, url.path)
+        vertxReq.ssl(url.protocol == "https")
         req.params.forEach { (name, value) -> vertxReq.addQueryParam(name, value) }
         req.headers.forEach { (name, value) -> vertxReq.putHeader(name, value) }
         when (req.body) {
