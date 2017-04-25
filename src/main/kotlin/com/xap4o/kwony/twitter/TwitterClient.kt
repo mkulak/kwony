@@ -5,6 +5,7 @@ import com.xap4o.kwony.http.Form
 import com.xap4o.kwony.http.HttpClient
 import com.xap4o.kwony.http.HttpRequest
 import com.xap4o.kwony.utils.Logging
+import com.xap4o.kwony.utils.json
 import com.xap4o.kwony.utils.map
 import io.vertx.core.http.HttpMethod
 import java.util.concurrent.CompletableFuture
@@ -23,7 +24,7 @@ class TwitterClientImpl(val config: ProcessingConfig, val http: HttpClient) : Tw
               .withTimeout(config.timeout)
               .withBasicAuth(config.twitterKey, config.twitterSecret)
               .withHeader("Content-Type" to "x-www-form-urlencoded; charset=utf-8")
-      return http.make(req, AuthResponse::class.java).map { Token(it.accessToken) }
+      return http.json<AuthResponse>(req).map { Token(it.accessToken) }
   }
 
   override fun search(token: Token, keyword: String): CompletableFuture<SearchResponse> {
@@ -32,7 +33,7 @@ class TwitterClientImpl(val config: ProcessingConfig, val http: HttpClient) : Tw
               .withParams(mapOf("q" to keyword))
               .withTimeout(config.timeout)
               .withOAuth2(token.value)
-      return http.make(req, SearchResponse::class.java)
+      return http.json(req)
   }
 }
 

@@ -47,7 +47,6 @@ object Empty : HttpEntity()
 
 interface HttpClient {
     fun execute(req: HttpRequest): CompletableFuture<HttpResponse<Buffer>>
-    fun <T> make(req: HttpRequest, expected: Class<T>): CompletableFuture<T>
 }
 
 class HttpClientImpl(val webClient: WebClient) : HttpClient {
@@ -74,9 +73,5 @@ class HttpClientImpl(val webClient: WebClient) : HttpClient {
             it
         }.dematerialize()
     }
-
-    override fun <T> make(req: HttpRequest, expected: Class<T>): CompletableFuture<T> =
-            execute(req).map { it.bodyAsJson(expected) }
-
 }
 

@@ -1,5 +1,7 @@
 package com.xap4o.kwony.utils
 
+import com.xap4o.kwony.http.HttpClient
+import com.xap4o.kwony.http.HttpRequest
 import io.vertx.core.MultiMap
 import io.vertx.core.http.HttpServerResponse
 import io.vertx.core.json.Json
@@ -7,13 +9,11 @@ import java.util.Base64
 import java.util.concurrent.CompletableFuture
 
 fun HttpServerResponse.endWithJson(obj: Any) {
-    this.putHeader("Content-Type", "application/json; charset=utf-8").end(Json.encodePrettily(obj))
+    putHeader("Content-Type", "application/json; charset=utf-8").end(Json.encodePrettily(obj))
 }
 
-fun Map<String, String>.toMultiMap(): MultiMap {
-    val self = this
-    return MultiMap.caseInsensitiveMultiMap().apply { addAll(self) }
-}
+fun Map<String, String>.toMultiMap(): MultiMap = MultiMap.caseInsensitiveMultiMap().apply { addAll(this@toMultiMap) }
+
 
 fun String.encodeBase64(): String =
         Base64.getEncoder().encode(this.toByteArray(Charsets.UTF_8)).toString(Charsets.UTF_8)
@@ -23,6 +23,9 @@ fun basicAuthHeader(name: String, password: String): Pair<String, String> =
 
 fun oauth2Header(token: String): Pair<String, String> =
         "Authorization" to "Bearer $token"
+
+inline fun <reified T> HttpClient.json(req: HttpRequest): CompletableFuture<T> =
+        execute(req).map { it.bodyAsJson(T::class.java) }
 
 fun <T> List<CompletableFuture<T>>.gatherUnordered(): CompletableFuture<List<T>> {
     return CompletableFuture.allOf(*this.toTypedArray()).thenApply { _ -> this.map { it.join()} }
