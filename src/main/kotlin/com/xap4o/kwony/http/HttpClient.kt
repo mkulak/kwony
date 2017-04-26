@@ -1,9 +1,6 @@
 package com.xap4o.kwony.http
 
 import com.xap4o.kwony.utils.basicAuthHeader
-import com.xap4o.kwony.utils.dematerialize
-import com.xap4o.kwony.utils.map
-import com.xap4o.kwony.utils.materialize
 import com.xap4o.kwony.utils.oauth2Header
 import com.xap4o.kwony.utils.toMultiMap
 import io.vertx.core.AsyncResult
@@ -42,7 +39,9 @@ data class HttpRequest(
 sealed class HttpEntity
 data class Form(val params: Map<String, String>) : HttpEntity()
 data class Json(val payload: Any) : HttpEntity()
-object Empty : HttpEntity()
+object Empty : HttpEntity() {
+    override fun toString() = "Empty"
+}
 
 
 interface HttpClient {
@@ -55,11 +54,11 @@ class HttpClientImpl(val webClient: WebClient) : HttpClient {
         fun handler(res: AsyncResult<HttpResponse<Buffer>>) {
             if (res.succeeded()) future.complete(res.result()) else future.completeExceptionally(res.cause())
         }
-
         val url = URL(req.url)
         val port = if (url.port == -1) url.defaultPort else url.port
         val vertxReq = webClient.request(req.method, port, url.host, url.path)
         vertxReq.ssl(url.protocol == "https")
+        vertxReq.timeout(req.timeout.toMillis())
         req.params.forEach { (name, value) -> vertxReq.addQueryParam(name, value) }
         req.headers.forEach { (name, value) -> vertxReq.putHeader(name, value) }
         when (req.body) {
@@ -67,11 +66,8 @@ class HttpClientImpl(val webClient: WebClient) : HttpClient {
             is Json -> vertxReq.sendJson(req.body.payload, ::handler)
             is Form -> vertxReq.sendForm(req.body.params.toMultiMap(), ::handler)
         }
-        println("making: $req port $port")
-        return future.materialize().map {
-            println("got response: $it")
-            it
-        }.dematerialize()
+        println("making: $req ${vertxReq.queryParams()}")
+        return future
     }
 }
 

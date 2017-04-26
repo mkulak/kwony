@@ -19,13 +19,10 @@ class AnalyzeJob(
 
     fun process(query: String): CompletableFuture<AnalyzeResult> {
         val timer = createTimer()
-        println("created timer for $query")
         return twitterClient
                 .open()
-                .flatMap {
-                    println("token: $it")
-                    twitterClient.search(it, query)
-                }.flatMap { searchResult: SearchResponse ->
+                .flatMap { twitterClient.search(it, query) }
+                .flatMap { searchResult: SearchResponse ->
                     searchResult.tweets.map(analyzerClient::analyze).map { it.materialize() }.gatherUnordered().map { results ->
                         val (success, failures) = results.partition { it.isSuccess() }
                         val positiveCount = success.count { (it as Success<Boolean>).value }

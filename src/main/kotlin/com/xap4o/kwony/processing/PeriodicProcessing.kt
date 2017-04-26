@@ -27,7 +27,6 @@ class PeriodicProcessing(
 
     private fun process(): Unit {
         Try {
-            println("process")
             keywordsDb.getAll().map { keyword ->
                 println("process $keyword")
                 job.process(keyword).materialize()

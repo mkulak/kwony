@@ -28,7 +28,7 @@ class TwitterClientImpl(val config: ProcessingConfig, val http: HttpClient) : Tw
   }
 
   override fun search(token: Token, keyword: String): CompletableFuture<SearchResponse> {
-      println("search: $token $keyword")
+      println("search: $keyword $token")
       val req = HttpRequest("${config.twitterHost}/1.1/search/tweets.json")
               .withParams(mapOf("q" to keyword))
               .withTimeout(config.timeout)
