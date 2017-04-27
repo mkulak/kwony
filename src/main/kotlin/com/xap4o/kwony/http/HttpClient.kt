@@ -4,10 +4,12 @@ import com.xap4o.kwony.utils.basicAuthHeader
 import com.xap4o.kwony.utils.oauth2Header
 import com.xap4o.kwony.utils.toMultiMap
 import io.vertx.core.AsyncResult
+import io.vertx.core.Vertx
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpMethod
 import io.vertx.ext.web.client.HttpResponse
 import io.vertx.ext.web.client.WebClient
+import io.vertx.ext.web.client.WebClientOptions
 import java.net.URL
 import java.time.Duration
 import java.util.concurrent.CompletableFuture
@@ -48,7 +50,10 @@ interface HttpClient {
     fun execute(req: HttpRequest): CompletableFuture<HttpResponse<Buffer>>
 }
 
-class HttpClientImpl(val webClient: WebClient) : HttpClient {
+class HttpClientImpl(vertx: Vertx) : HttpClient {
+    val webClient = WebClient.create(vertx)
+    val httpsWebClient = WebClient.create(vertx, WebClientOptions().setSsl(true))
+
     override fun execute(req: HttpRequest): CompletableFuture<HttpResponse<Buffer>> {
         val future = CompletableFuture<HttpResponse<Buffer>>()
         fun handler(res: AsyncResult<HttpResponse<Buffer>>) {
@@ -56,8 +61,9 @@ class HttpClientImpl(val webClient: WebClient) : HttpClient {
         }
         val url = URL(req.url)
         val port = if (url.port == -1) url.defaultPort else url.port
-        val vertxReq = webClient.request(req.method, port, url.host, url.path)
-        vertxReq.ssl(url.protocol == "https")
+        val client = if (url.protocol == "https") httpsWebClient else webClient
+        val vertxReq = client.request(req.method, port, url.host, url.path)
+//        vertxReq.ssl(url.protocol == "https")
         vertxReq.timeout(req.timeout.toMillis())
         req.params.forEach { (name, value) -> vertxReq.addQueryParam(name, value) }
         req.headers.forEach { (name, value) -> vertxReq.putHeader(name, value) }
@@ -66,7 +72,6 @@ class HttpClientImpl(val webClient: WebClient) : HttpClient {
             is Json -> vertxReq.sendJson(req.body.payload, ::handler)
             is Form -> vertxReq.sendForm(req.body.params.toMultiMap(), ::handler)
         }
-        println("making: $req ${vertxReq.queryParams()}")
         return future
     }
 }

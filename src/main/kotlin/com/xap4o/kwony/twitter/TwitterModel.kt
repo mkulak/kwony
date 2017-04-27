@@ -1,5 +1,6 @@
 package com.xap4o.kwony.twitter
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 
 data class AuthResponse(
@@ -12,7 +13,12 @@ data class SearchResponse(
     @JsonProperty("search_metadata") val metadata: SearchMetadata
 )
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class SearchMetadata(val count: Int, val query: String)
 
-data class Tweet(val text: String, @JsonProperty("user.name") val username: String)
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class Tweet(val text: String, val user: User)
+
+@JsonIgnoreProperties(ignoreUnknown = true)
+data class User(val id: Long, val name: String)
 

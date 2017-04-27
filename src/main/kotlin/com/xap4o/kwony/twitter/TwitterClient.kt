@@ -18,7 +18,7 @@ interface TwitterClient {
 
 class TwitterClientImpl(val config: ProcessingConfig, val http: HttpClient) : TwitterClient, Logging {
 
-  override fun open(): CompletableFuture<Token> {
+  override fun open(): CompletableFuture<Token> { //TODO MK: cache token
       val req = HttpRequest("${config.twitterHost}/oauth2/token", HttpMethod.POST)
               .withBody(Form(mapOf("grant_type" to "client_credentials")))
               .withTimeout(config.timeout)
@@ -28,7 +28,6 @@ class TwitterClientImpl(val config: ProcessingConfig, val http: HttpClient) : Tw
   }
 
   override fun search(token: Token, keyword: String): CompletableFuture<SearchResponse> {
-      println("search: $keyword $token")
       val req = HttpRequest("${config.twitterHost}/1.1/search/tweets.json")
               .withParams(mapOf("q" to keyword))
               .withTimeout(config.timeout)

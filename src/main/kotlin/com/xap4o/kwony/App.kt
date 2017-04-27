@@ -10,16 +10,16 @@ import com.xap4o.kwony.http.HttpClientImpl
 import com.xap4o.kwony.http.KeywordsServer
 import com.xap4o.kwony.processing.AnalyzeJob
 import com.xap4o.kwony.processing.AnalyzerClientImpl
-import com.xap4o.kwony.twitter.Token
+import com.xap4o.kwony.processing.PeriodicProcessing
 import com.xap4o.kwony.twitter.TwitterClientImpl
 import com.xap4o.kwony.utils.Timer
-import com.xap4o.kwony.utils.map
-import com.xap4o.kwony.utils.materialize
 import io.vertx.core.Vertx
 import io.vertx.core.json.Json
 import io.vertx.ext.web.Router
-import io.vertx.ext.web.client.WebClient
+import org.slf4j.LoggerFactory
 import java.util.concurrent.ScheduledThreadPoolExecutor
+
+val LOG = LoggerFactory.getLogger("App")
 
 fun main(args: Array<String>): Unit {
     Json.mapper.registerKotlinModule()
@@ -33,7 +33,7 @@ fun main(args: Array<String>): Unit {
     val pool = ScheduledThreadPoolExecutor(1)
 
     val vertx = Vertx.vertx()
-    val httpClient = HttpClientImpl(WebClient.create(vertx))
+    val httpClient = HttpClientImpl(vertx)
     val twitterClient = TwitterClientImpl(config.processing, httpClient)
     val analyzerClient = AnalyzerClientImpl(config.processing, httpClient)
     val job = AnalyzeJob(twitterClient, analyzerClient, Timer.system)
@@ -43,12 +43,12 @@ fun main(args: Array<String>): Unit {
     AnalyzerServer.api(router)
     keywordsServer.api(router)
 
-//    PeriodicProcessing(job, config.processing, resultsDb, keywordsDb, pool).start()
+    PeriodicProcessing(job, config.processing, resultsDb, keywordsDb, pool).start()
 
-    println("starting http server on http://${config.http.host}:${config.http.port}")
-    val token = Token("")
-    twitterClient.search(token, "trump").materialize().map { println(it) }
-//    vertx.createHttpServer().requestHandler(router::accept).listen(config.http.port, config.http.host)
+    LOG.info("starting http server on http://${config.http.host}:${config.http.port}")
+    vertx.createHttpServer().requestHandler(router::accept).listen(config.http.port, config.http.host)
+//    val token = Token("")
+//    twitterClient.search(token, "trump").materialize().map { println(it) }
 }
 
 

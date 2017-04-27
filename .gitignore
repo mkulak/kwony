@@ -1,0 +1,7 @@
+.idea/*
+.gradle
+.vertx
+build
+target
+project
+projectFilesBackup

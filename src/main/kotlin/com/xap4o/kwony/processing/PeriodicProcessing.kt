@@ -28,11 +28,11 @@ class PeriodicProcessing(
     private fun process(): Unit {
         Try {
             keywordsDb.getAll().map { keyword ->
-                println("process $keyword")
+                LOG.info("process $keyword")
                 job.process(keyword).materialize()
             }.gatherUnordered().map(this::handleResults)
         }.onError {
-            it.printStackTrace()
+            LOG.error("Error while processing: ", it)
         }
     }
 
