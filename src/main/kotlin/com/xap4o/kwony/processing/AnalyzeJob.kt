@@ -21,19 +21,24 @@ class AnalyzeJob(
         val timer = createTimer()
         return twitterClient
                 .open()
-                .flatMap { twitterClient.search(it, query) }
-                .flatMap { searchResult: SearchResponse ->
-                    searchResult.tweets.map(analyzerClient::analyze).map { it.materialize() }.gatherUnordered().map { results ->
+                .flatMap { token -> twitterClient.search(token, query) }
+                .flatMap { searchResponse -> analyzeTweets(searchResponse, timer) }
+    }
+
+    fun analyzeTweets(searchResponse: SearchResponse, timer: () -> Long): CompletableFuture<AnalyzeResult> =
+            searchResponse.tweets
+                    .map(analyzerClient::analyze)
+                    .map { it.materialize() }
+                    .gatherUnordered()
+                    .map { results ->
                         val (success, failures) = results.partition { it.isSuccess() }
                         val positiveCount = success.count { (it as Success<Boolean>).value }
                         val negativeCount = success.size - positiveCount
                         val errorsCount = results.size - failures.size
                         val duration = timer()
-                        val realQuery = searchResult.metadata.query
+                        val realQuery = searchResponse.metadata.query
                         AnalyzeResult(realQuery, results.size, positiveCount, negativeCount, errorsCount, duration)
                     }
-                }
-    }
 }
 
 data class AnalyzeResult(
