@@ -30,6 +30,15 @@ fun <A, B> CompletableFuture<A>.map(f: (A) -> B): CompletableFuture<B> = thenApp
 
 fun <A, B> CompletableFuture<A>.flatMap(f: (A) -> CompletableFuture<B>): CompletableFuture<B> = thenCompose(f)
 
+fun <A> CompletableFuture<A>.withErrorMessage(message: String): CompletableFuture<A> {
+    val future = CompletableFuture<A>()
+    handle { result, throwable ->
+        if (throwable != null) future.completeExceptionally(RuntimeException(message, throwable))
+        else future.complete(result)
+    }
+    return future
+}
+
 fun <A> CompletableFuture<A>.onError(f: (Throwable) -> Unit): CompletableFuture<A> =
         apply {
             handle { _, throwable -> if (throwable != null) f(throwable) }

@@ -24,5 +24,5 @@ fun oauth2Header(token: String): Pair<String, String> =
         "Authorization" to "Bearer $token"
 
 inline fun <reified T> HttpClient.json(req: HttpRequest): CompletableFuture<T> =
-        execute(req).map { it.bodyAsJson(T::class.java) }.onError { it.printStackTrace() }
+        execute(req).map { it.bodyAsJson(T::class.java) }//.onError { it.printStackTrace() }
 

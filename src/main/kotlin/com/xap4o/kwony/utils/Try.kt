@@ -6,8 +6,7 @@ sealed class Try<T> {
 
     fun onError(f: (Throwable) -> Unit) = if (this is Failure) f(error) else Unit
 
-    val orDie
-        get() = when(this) {
+    fun orDie() = when(this) {
             is Success -> value
             is Failure -> throw error
         }

@@ -37,11 +37,10 @@ fun main(args: Array<String>): Unit {
     val twitterClient = TwitterClientImpl(config.processing, httpClient)
     val analyzerClient = AnalyzerClientImpl(config.processing, httpClient)
     val job = AnalyzeJob(twitterClient, analyzerClient, Timer.system)
-    val keywordsServer = KeywordsServer(keywordsDb)
 
     val router = Router.router(vertx)
     AnalyzerServer.api(router)
-    keywordsServer.api(router)
+    KeywordsServer(keywordsDb).api(router)
 
     PeriodicProcessing(job, config.processing, resultsDb, keywordsDb, pool).start()
 

@@ -26,7 +26,7 @@ class PeriodicProcessing(
 
     private fun process(): Unit {
         launch(CommonPool) {
-            val results = keywordsDb.getAll().map { keyword -> Try { job.process(keyword) } }
+            val results = keywordsDb.getAll().map { keyword -> job.process(keyword) }
             handleResults(results)
         }
     }

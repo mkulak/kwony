@@ -57,8 +57,14 @@ class HttpClientImpl(vertx: Vertx) : HttpClient {
     override fun execute(req: HttpRequest): CompletableFuture<HttpResponse<Buffer>> {
         val future = CompletableFuture<HttpResponse<Buffer>>()
         fun handler(res: AsyncResult<HttpResponse<Buffer>>) {
-            if (res.succeeded()) future.complete(res.result()) else future.completeExceptionally(res.cause())
+            if (res.succeeded()) {
+                val statusCode = res.result().statusCode()
+                if (statusCode in 200..299)
+                    future.complete(res.result())
+                else future.completeExceptionally(RuntimeException("Unexpected return code: $statusCode"))
+            } else future.completeExceptionally(res.cause())
         }
+
         val url = URL(req.url)
         val port = if (url.port == -1) url.defaultPort else url.port
         val client = if (url.protocol == "https") httpsWebClient else webClient

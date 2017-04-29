@@ -9,6 +9,7 @@ import com.xap4o.kwony.utils.Try
 import com.xap4o.kwony.utils.await
 import com.xap4o.kwony.utils.json
 import com.xap4o.kwony.utils.map
+import com.xap4o.kwony.utils.withErrorMessage
 import io.vertx.core.http.HttpMethod
 
 
@@ -25,7 +26,10 @@ class TwitterClientImpl(val config: ProcessingConfig, val http: HttpClient) : Tw
                 .withTimeout(config.timeout)
                 .withBasicAuth(config.twitterKey, config.twitterSecret)
                 .withHeader("Content-Type" to "x-www-form-urlencoded; charset=utf-8")
-        return http.json<AuthResponse>(req).map { Token(it.accessToken) }.await()
+        return http.json<AuthResponse>(req)
+                .withErrorMessage("Failed to get twitter token")
+                .map { Token(it.accessToken) }
+                .await()
     }
 
     override suspend fun search(token: Token, keyword: String): Try<SearchResponse> {
@@ -33,7 +37,9 @@ class TwitterClientImpl(val config: ProcessingConfig, val http: HttpClient) : Tw
                 .withParams(mapOf("q" to keyword))
                 .withTimeout(config.timeout)
                 .withOAuth2(token.value)
-        return http.json<SearchResponse>(req).await()
+        return http.json<SearchResponse>(req)
+                .withErrorMessage("Failed to search twitter for '$keyword'")
+                .await()
     }
 }
 
