@@ -1,9 +1,10 @@
 package com.xap4o.kwony.utils
 
 import java.util.concurrent.CompletableFuture
+import kotlin.coroutines.experimental.suspendCoroutine
 
 fun <T> List<CompletableFuture<T>>.gatherUnordered(): CompletableFuture<List<T>> {
-    return CompletableFuture.allOf(*this.toTypedArray()).thenApply { _ -> this.map { it.join()} }
+    return CompletableFuture.allOf(*this.toTypedArray()).thenApply { _ -> this.map { it.join() } }
 }
 
 fun <T> CompletableFuture<T>.materialize(): CompletableFuture<Try<T>> {
@@ -30,6 +31,13 @@ fun <A, B> CompletableFuture<A>.map(f: (A) -> B): CompletableFuture<B> = thenApp
 fun <A, B> CompletableFuture<A>.flatMap(f: (A) -> CompletableFuture<B>): CompletableFuture<B> = thenCompose(f)
 
 fun <A> CompletableFuture<A>.onError(f: (Throwable) -> Unit): CompletableFuture<A> =
-    apply {
-        handle { _, throwable -> if (throwable != null) f(throwable) }
-    }
+        apply {
+            handle { _, throwable -> if (throwable != null) f(throwable) }
+        }
+
+suspend fun <A> CompletableFuture<A>.await(): A =
+        suspendCoroutine { cont ->
+            handle { result, throwable ->
+                if (throwable != null) cont.resumeWithException(throwable) else cont.resume(result)
+            }
+        }
