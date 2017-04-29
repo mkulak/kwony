@@ -26,8 +26,12 @@ class PeriodicProcessing(
 
     private fun process(): Unit {
         launch(CommonPool) {
-            val results = keywordsDb.getAll().map { keyword -> job.process(keyword) }
-            handleResults(results)
+            try {
+                val results = keywordsDb.getAll().map { keyword -> job.process(keyword) }
+                handleResults(results)
+            } catch(e: Exception) {
+                LOG.error("Unexpected exception: ", e)
+            }
         }
     }
 

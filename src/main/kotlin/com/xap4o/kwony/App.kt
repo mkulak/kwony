@@ -2,9 +2,9 @@ package com.xap4o.kwony
 
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.xap4o.kwony.config.loadConfig
-import com.xap4o.kwony.db.AnalyzeResultDb
 import com.xap4o.kwony.db.Db
-import com.xap4o.kwony.db.SearchKeywordsDb
+import com.xap4o.kwony.db.PostgresAnalyzeResultDb
+import com.xap4o.kwony.db.PostgresSearchKeywordsDb
 import com.xap4o.kwony.http.AnalyzerServer
 import com.xap4o.kwony.http.HttpClientImpl
 import com.xap4o.kwony.http.KeywordsServer
@@ -26,11 +26,10 @@ fun main(args: Array<String>): Unit {
     Json.mapper.registerKotlinModule()
 
     val config = loadConfig()
-    Db.migrate(config.db)
 
-    val db = Db.initSessionFactory(config.db)
-    val resultsDb = AnalyzeResultDb(db)
-    val keywordsDb = SearchKeywordsDb(db)
+    val db = Db.init(config.db)
+    val resultsDb = PostgresAnalyzeResultDb(db)
+    val keywordsDb = PostgresSearchKeywordsDb(db)
     val pool = ScheduledThreadPoolExecutor(1)
 
     val vertx = Vertx.vertx()

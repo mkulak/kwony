@@ -1,3 +1,7 @@
+* beautify db
+* write tests
+
+
 Hey
 I'm thinking of giving a talk about coroutines on next Kotlin Meetup (10-15 minutes live coding session).
 But I found out that next meetup will be special because of Jetbrains talks. Maybe I should postpone my talk (people will be overwhelmed with info anyway).
