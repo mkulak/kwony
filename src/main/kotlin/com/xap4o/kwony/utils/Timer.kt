@@ -1,13 +1,17 @@
 package com.xap4o.kwony.utils
 
-typealias CreateTimer = () -> () -> Long
+interface Clock {
+    fun now(): Long
+}
 
-object Timer {
-    fun now(): Long = System.currentTimeMillis()
+object SystemClock : Clock {
+    override fun now(): Long = System.currentTimeMillis()
+}
 
-    val system: CreateTimer = run {
-        val start = now()
-        val r = { now() - start }
-        { r }
-    }
+typealias TimerFactory = () -> Timer
+
+class Timer(val clock: Clock) {
+    private val startTime: Long = clock.now()
+
+    fun elapsed() = clock.now() - startTime
 }

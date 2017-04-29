@@ -1,29 +1,28 @@
 package com.xap4o.kwony.processing
 
 import com.xap4o.kwony.twitter.TwitterClient
-import com.xap4o.kwony.utils.CreateTimer
 import com.xap4o.kwony.utils.Logging
 import com.xap4o.kwony.utils.Success
+import com.xap4o.kwony.utils.TimerFactory
 import com.xap4o.kwony.utils.Try
-import com.xap4o.kwony.utils.partitionAs
 
 
 class AnalyzeJob(
         val twitterClient: TwitterClient,
         val analyzerClient: AnalyzerClient,
-        val createTimer: CreateTimer) : Logging {
+        val timerFactory: TimerFactory) : Logging {
 
     suspend fun process(query: String): Try<AnalyzeResult> =
         Try {
-            val timer = createTimer()
+            val timer = timerFactory()
             val token = twitterClient.open().orDie()
             val searchResponse = twitterClient.search(token, query).orDie()
             val results = searchResponse.tweets.map { analyzerClient.analyze(it) }
-            val (success, failures) = results.partitionAs<Success<Boolean>>()
+            val success = results.filterIsInstance<Success<Boolean>>()
             val positiveCount = success.count { it.value }
-            val negativeCount = success.count { !it.value }
-            val errorsCount = failures.size
-            val duration = timer()
+            val negativeCount = success.size - positiveCount
+            val errorsCount = results.size - success.size
+            val duration = timer.elapsed()
             val realQuery = searchResponse.metadata.query
             AnalyzeResult(realQuery, results.size, positiveCount, negativeCount, errorsCount, duration)
         }

@@ -12,6 +12,7 @@ import com.xap4o.kwony.processing.AnalyzeJob
 import com.xap4o.kwony.processing.AnalyzerClientImpl
 import com.xap4o.kwony.processing.PeriodicProcessing
 import com.xap4o.kwony.twitter.TwitterClientImpl
+import com.xap4o.kwony.utils.SystemClock
 import com.xap4o.kwony.utils.Timer
 import io.vertx.core.Vertx
 import io.vertx.core.json.Json
@@ -36,7 +37,7 @@ fun main(args: Array<String>): Unit {
     val httpClient = HttpClientImpl(vertx)
     val twitterClient = TwitterClientImpl(config.processing, httpClient)
     val analyzerClient = AnalyzerClientImpl(config.processing, httpClient)
-    val job = AnalyzeJob(twitterClient, analyzerClient, Timer.system)
+    val job = AnalyzeJob(twitterClient, analyzerClient, { Timer(SystemClock) })
 
     val router = Router.router(vertx)
     AnalyzerServer.api(router)
@@ -46,8 +47,6 @@ fun main(args: Array<String>): Unit {
 
     LOG.info("starting http server on http://${config.http.host}:${config.http.port}")
     vertx.createHttpServer().requestHandler(router::accept).listen(config.http.port, config.http.host)
-//    val token = Token("")
-//    twitterClient.search(token, "trump").materialize().map { println(it) }
 }
 
 
