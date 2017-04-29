@@ -1,7 +1,7 @@
 package com.xap4o.kwony.config
 
-import com.typesafe.config.ConfigFactory
 import com.typesafe.config.Config
+import com.typesafe.config.ConfigFactory
 import java.time.Duration
 
 data class AppConfig(val http: HttpConfig, val processing: ProcessingConfig, val db: DbConfig)

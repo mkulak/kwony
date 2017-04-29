@@ -3,7 +3,10 @@ package com.xap4o.kwony.processing
 import com.xap4o.kwony.config.ProcessingConfig
 import com.xap4o.kwony.db.AnalyzeResultDb
 import com.xap4o.kwony.db.SearchKeywordsDb
+import com.xap4o.kwony.utils.Failure
 import com.xap4o.kwony.utils.Logging
+import com.xap4o.kwony.utils.Success
+import com.xap4o.kwony.utils.Try
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.launch
 import java.util.concurrent.ScheduledFuture
@@ -23,15 +26,21 @@ class PeriodicProcessing(
 
     private fun process(): Unit {
         launch(CommonPool) {
-            val results = keywordsDb.getAll().map { keyword -> job.process(keyword) }
+            val results = keywordsDb.getAll().map { keyword -> Try { job.process(keyword) } }
             handleResults(results)
         }
     }
 
-    private fun handleResults(results: List<AnalyzeResult>) {
+    private fun handleResults(results: List<Try<AnalyzeResult>>) {
         results.forEach {
-            LOG.info(it.toString())
-            resultDb.persist(it)
+            when (it) {
+                is Success -> {
+                    LOG.info(it.value.toString())
+                    resultDb.persist(it.value)
+                }
+                is Failure ->
+                    LOG.error("Error while processing:", it.error)
+            }
         }
     }
 }

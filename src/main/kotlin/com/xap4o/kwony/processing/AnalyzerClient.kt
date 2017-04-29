@@ -8,7 +8,6 @@ import com.xap4o.kwony.twitter.Tweet
 import com.xap4o.kwony.utils.Try
 import com.xap4o.kwony.utils.await
 import com.xap4o.kwony.utils.json
-import com.xap4o.kwony.utils.materialize
 import io.vertx.core.http.HttpMethod
 
 interface AnalyzerClient {
@@ -21,6 +20,6 @@ class AnalyzerClientImpl(val config: ProcessingConfig, val http: HttpClient) : A
         val req = HttpRequest("${config.analyzeHost}/analyze", HttpMethod.POST)
                 .withBody(Json(tweet))
                 .withTimeout(config.timeout)
-        return http.json<Boolean>(req).materialize().await()
+        return http.json<Boolean>(req).await()
     }
 }

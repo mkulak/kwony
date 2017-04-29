@@ -1,5 +1,4 @@
 import java.lang.Thread.sleep
-import java.util.concurrent.CompletableFuture
 import kotlin.concurrent.thread
 import kotlin.coroutines.experimental.Continuation
 import kotlin.coroutines.experimental.CoroutineContext

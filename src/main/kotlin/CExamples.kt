@@ -1,5 +1,8 @@
-import kotlinx.coroutines.experimental.*
-import kotlinx.coroutines.experimental.channels.*
+import kotlinx.coroutines.experimental.CommonPool
+import kotlinx.coroutines.experimental.channels.Channel
+import kotlinx.coroutines.experimental.delay
+import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.runBlocking
 
 fun main2(args: Array<String>) = runBlocking<Unit> {
     val channel = Channel<String>()

@@ -35,9 +35,9 @@ fun <A> CompletableFuture<A>.onError(f: (Throwable) -> Unit): CompletableFuture<
             handle { _, throwable -> if (throwable != null) f(throwable) }
         }
 
-suspend fun <A> CompletableFuture<A>.await(): A =
+suspend fun <A> CompletableFuture<A>.await(): Try<A> =
         suspendCoroutine { cont ->
             handle { result, throwable ->
-                if (throwable != null) cont.resumeWithException(throwable) else cont.resume(result)
+                cont.resume(if (throwable != null) Failure(throwable) else Success(result))
             }
         }

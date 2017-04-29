@@ -6,8 +6,14 @@ sealed class Try<T> {
 
     fun onError(f: (Throwable) -> Unit) = if (this is Failure) f(error) else Unit
 
+    val orDie
+        get() = when(this) {
+            is Success -> value
+            is Failure -> throw error
+        }
+
     companion object {
-        operator fun <T> invoke(f: () -> T): Try<T> = try {
+        suspend operator fun <T> invoke(f: suspend () -> T): Try<T> = try {
             Success(f())
         } catch (e: Throwable) {
             Failure(e)

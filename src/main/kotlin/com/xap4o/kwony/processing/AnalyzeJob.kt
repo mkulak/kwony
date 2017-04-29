@@ -14,8 +14,8 @@ class AnalyzeJob(
 
     suspend fun process(query: String): AnalyzeResult {
         val timer = createTimer()
-        val token = twitterClient.open()
-        val searchResponse = twitterClient.search(token, query)
+        val token = twitterClient.open().orDie
+        val searchResponse = twitterClient.search(token, query).orDie
         val results = searchResponse.tweets.map { analyzerClient.analyze(it) }
         val (success, failures) = results.partitionAs<Success<Boolean>>()
         val positiveCount = success.count { it.value }

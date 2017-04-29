@@ -5,6 +5,7 @@ import com.xap4o.kwony.http.Form
 import com.xap4o.kwony.http.HttpClient
 import com.xap4o.kwony.http.HttpRequest
 import com.xap4o.kwony.utils.Logging
+import com.xap4o.kwony.utils.Try
 import com.xap4o.kwony.utils.await
 import com.xap4o.kwony.utils.json
 import com.xap4o.kwony.utils.map
@@ -12,13 +13,13 @@ import io.vertx.core.http.HttpMethod
 
 
 interface TwitterClient {
-    suspend fun open(): Token
-    suspend fun search(token: Token, keyword: String): SearchResponse
+    suspend fun open(): Try<Token>
+    suspend fun search(token: Token, keyword: String): Try<SearchResponse>
 }
 
 class TwitterClientImpl(val config: ProcessingConfig, val http: HttpClient) : TwitterClient, Logging {
 
-    override suspend fun open(): Token { //TODO MK: cache token
+    override suspend fun open(): Try<Token> { //TODO MK: cache token
         val req = HttpRequest("${config.twitterHost}/oauth2/token", HttpMethod.POST)
                 .withBody(Form(mapOf("grant_type" to "client_credentials")))
                 .withTimeout(config.timeout)
@@ -27,7 +28,7 @@ class TwitterClientImpl(val config: ProcessingConfig, val http: HttpClient) : Tw
         return http.json<AuthResponse>(req).map { Token(it.accessToken) }.await()
     }
 
-    override suspend fun search(token: Token, keyword: String): SearchResponse {
+    override suspend fun search(token: Token, keyword: String): Try<SearchResponse> {
         val req = HttpRequest("${config.twitterHost}/1.1/search/tweets.json")
                 .withParams(mapOf("q" to keyword))
                 .withTimeout(config.timeout)
