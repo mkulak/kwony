@@ -1,4 +1,5 @@
-* beautify db
+* Try in db signatures?
+* Try instead of future in http client?
 * write tests
 
 
