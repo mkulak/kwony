@@ -24,3 +24,5 @@ data class Tweet(val text: String, val user: User)
 @JsonIgnoreProperties(ignoreUnknown = true)
 data class User(val id: Long, val name: String)
 
+data class Keyword(val value: String)
+

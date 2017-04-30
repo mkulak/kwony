@@ -13,7 +13,7 @@ import io.vertx.core.http.HttpMethod
 
 interface TwitterClient {
     suspend fun open(): Try<TwitterToken>
-    suspend fun search(token: TwitterToken, keyword: String): Try<SearchResponse>
+    suspend fun search(token: TwitterToken, keyword: Keyword): Try<SearchResponse>
 }
 
 class TwitterClientImpl(val config: TwitterConfig, val http: HttpClient) : TwitterClient, Logging {
@@ -29,9 +29,9 @@ class TwitterClientImpl(val config: TwitterConfig, val http: HttpClient) : Twitt
                 TwitterToken(result.accessToken)
             }
 
-    override suspend fun search(token: TwitterToken, keyword: String): Try<SearchResponse> {
+    override suspend fun search(token: TwitterToken, keyword: Keyword): Try<SearchResponse> {
         val req = HttpRequest(config.host.withPath("/1.1/search/tweets.json"))
-                .withParams(mapOf("q" to keyword))
+                .withParams(mapOf("q" to keyword.value))
                 .withTimeout(config.timeout)
                 .withOAuth2(token.value)
         return http.json<SearchResponse>(req).withErrorMessage("Failed to search twitter for '$keyword'")

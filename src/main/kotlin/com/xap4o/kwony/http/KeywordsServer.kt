@@ -1,6 +1,7 @@
 package com.xap4o.kwony.http
 
 import com.xap4o.kwony.db.SearchKeywordsDb
+import com.xap4o.kwony.twitter.Keyword
 import com.xap4o.kwony.utils.endWithJson
 import io.vertx.core.Vertx
 import io.vertx.core.http.HttpMethod
@@ -14,12 +15,12 @@ class KeywordsServer(val keywordsDb: SearchKeywordsDb) {
                 }
                 route(HttpMethod.POST, "/search_keywords").handler { context ->
                     val keyword = context.request().getParam("keyword")
-                    keywordsDb.persist(keyword).orDie()
+                    keywordsDb.persist(Keyword(keyword)).orDie()
                     context.response().endWithJson("done")
                 }
                 route(HttpMethod.DELETE, "/search_keywords").handler { context ->
                     val keyword = context.request().getParam("keyword")
-                    keywordsDb.delete(keyword).orDie()
+                    keywordsDb.delete(Keyword(keyword)).orDie()
                     context.response().endWithJson("done")
                 }
             }

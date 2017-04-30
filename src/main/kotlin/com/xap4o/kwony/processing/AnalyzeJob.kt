@@ -1,5 +1,6 @@
 package com.xap4o.kwony.processing
 
+import com.xap4o.kwony.twitter.Keyword
 import com.xap4o.kwony.twitter.TwitterClient
 import com.xap4o.kwony.utils.Logging
 import com.xap4o.kwony.utils.Success
@@ -8,7 +9,7 @@ import com.xap4o.kwony.utils.Try
 
 
 interface AnalyzeJob {
-    suspend fun process(query: String): Try<AnalyzeResult>
+    suspend fun process(keyword: Keyword): Try<AnalyzeResult>
 }
 
 class AnalyzeJobImpl(
@@ -16,11 +17,11 @@ class AnalyzeJobImpl(
         val analyzerClient: AnalyzerClient,
         val timerFactory: TimerFactory) : AnalyzeJob, Logging {
 
-    override suspend fun process(query: String): Try<AnalyzeResult> =
+    override suspend fun process(keyword: Keyword): Try<AnalyzeResult> =
         Try {
             val timer = timerFactory()
             val token = twitterClient.open().orDie()
-            val searchResponse = twitterClient.search(token, query).orDie()
+            val searchResponse = twitterClient.search(token, keyword).orDie()
             val results = searchResponse.tweets.map { analyzerClient.analyze(it) }
             val success = results.filterIsInstance<Success<Boolean>>()
             val positiveCount = success.count { it.value }
