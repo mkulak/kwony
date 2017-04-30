@@ -7,12 +7,16 @@ import com.xap4o.kwony.utils.TimerFactory
 import com.xap4o.kwony.utils.Try
 
 
-class AnalyzeJob(
+interface AnalyzeJob {
+    suspend fun process(query: String): Try<AnalyzeResult>
+}
+
+class AnalyzeJobImpl(
         val twitterClient: TwitterClient,
         val analyzerClient: AnalyzerClient,
-        val timerFactory: TimerFactory) : Logging {
+        val timerFactory: TimerFactory) : AnalyzeJob, Logging {
 
-    suspend fun process(query: String): Try<AnalyzeResult> =
+    override suspend fun process(query: String): Try<AnalyzeResult> =
         Try {
             val timer = timerFactory()
             val token = twitterClient.open().orDie()

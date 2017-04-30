@@ -8,17 +8,18 @@ import com.xap4o.kwony.db.PostgresSearchKeywordsDb
 import com.xap4o.kwony.http.AnalyzerServer
 import com.xap4o.kwony.http.HttpClientImpl
 import com.xap4o.kwony.http.KeywordsServer
-import com.xap4o.kwony.processing.AnalyzeJob
+import com.xap4o.kwony.processing.AnalyzeJobImpl
 import com.xap4o.kwony.processing.AnalyzerClientImpl
-import com.xap4o.kwony.processing.PeriodicProcessing
+import com.xap4o.kwony.processing.MainProcessing
+import com.xap4o.kwony.processing.Scheduling
 import com.xap4o.kwony.twitter.TwitterClientImpl
 import com.xap4o.kwony.utils.SystemClock
 import com.xap4o.kwony.utils.Timer
+import com.xap4o.kwony.utils.start
 import io.vertx.core.Vertx
 import io.vertx.core.json.Json
 import io.vertx.ext.web.Router
 import org.slf4j.LoggerFactory
-import java.util.concurrent.ScheduledThreadPoolExecutor
 
 val LOG = LoggerFactory.getLogger("App")
 
@@ -30,22 +31,20 @@ fun main(args: Array<String>): Unit {
     val db = Db.init(config.db)
     val resultsDb = PostgresAnalyzeResultDb(db)
     val keywordsDb = PostgresSearchKeywordsDb(db)
-    val pool = ScheduledThreadPoolExecutor(1)
 
     val vertx = Vertx.vertx()
     val httpClient = HttpClientImpl(vertx)
-    val twitterClient = TwitterClientImpl(config.processing, httpClient)
-    val analyzerClient = AnalyzerClientImpl(config.processing, httpClient)
-    val job = AnalyzeJob(twitterClient, analyzerClient, { Timer(SystemClock) })
+    val twitterClient = TwitterClientImpl(config.twitter, httpClient)
+    val analyzerClient = AnalyzerClientImpl(config.analyze, httpClient)
+    val job = AnalyzeJobImpl(twitterClient, analyzerClient, { Timer(SystemClock) })
+    val mainProcessing = MainProcessing(job, resultsDb, keywordsDb)
 
     val router = Router.router(vertx)
     AnalyzerServer.api(router)
     KeywordsServer(keywordsDb).api(router)
 
-    PeriodicProcessing(job, config.processing, resultsDb, keywordsDb, pool).start()
+    Scheduling.schedule(config.processing.interval, mainProcessing::process)
 
-    LOG.info("starting http server on http://${config.http.host}:${config.http.port}")
-    vertx.createHttpServer().requestHandler(router::accept).listen(config.http.port, config.http.host)
+    LOG.info("starting http server on ${config.http.host}")
+    vertx.createHttpServer().start(router, config.http.host)
 }
-
-

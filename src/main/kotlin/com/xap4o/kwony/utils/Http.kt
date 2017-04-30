@@ -1,9 +1,17 @@
 package com.xap4o.kwony.utils
 
 import io.vertx.core.MultiMap
+import io.vertx.core.http.HttpServer
 import io.vertx.core.http.HttpServerResponse
 import io.vertx.core.json.Json
+import io.vertx.ext.web.Router
+import java.net.URL
 import java.util.Base64
+
+fun HttpServer.start(router: Router, host: String) {
+    val url = URL(host)
+    requestHandler(router::accept).listen(url.port, url.host)
+}
 
 fun HttpServerResponse.endWithJson(obj: Any) {
     putHeader("Content-Type", "application/json; charset=utf-8").end(Json.encodePrettily(obj))

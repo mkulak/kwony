@@ -1,6 +1,6 @@
-* Try in db signatures?
-* Try instead of future in http client?
 * write tests
+* streaming?
+* url in config
 
 
 Hey

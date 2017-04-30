@@ -1,6 +1,6 @@
 package com.xap4o.kwony.twitter
 
-import com.xap4o.kwony.config.ProcessingConfig
+import com.xap4o.kwony.config.TwitterConfig
 import com.xap4o.kwony.http.Form
 import com.xap4o.kwony.http.HttpClient
 import com.xap4o.kwony.http.HttpRequest
@@ -15,21 +15,21 @@ interface TwitterClient {
     suspend fun search(token: TwitterToken, keyword: String): Try<SearchResponse>
 }
 
-class TwitterClientImpl(val config: ProcessingConfig, val http: HttpClient) : TwitterClient, Logging {
+class TwitterClientImpl(val config: TwitterConfig, val http: HttpClient) : TwitterClient, Logging {
 
     override suspend fun open(): Try<TwitterToken> = //TODO MK: cache token
             Try {
-                val req = HttpRequest("${config.twitterHost}/oauth2/token", HttpMethod.POST)
+                val req = HttpRequest("${config.host}/oauth2/token", HttpMethod.POST)
                         .withBody(Form(mapOf("grant_type" to "client_credentials")))
                         .withTimeout(config.timeout)
-                        .withBasicAuth(config.twitterKey, config.twitterSecret)
+                        .withBasicAuth(config.key, config.secret)
                         .withHeader("Content-Type" to "x-www-form-urlencoded; charset=utf-8")
                 val result = http.json<AuthResponse>(req).withErrorMessage("Failed to get twitter token").orDie()
                 TwitterToken(result.accessToken)
             }
 
     override suspend fun search(token: TwitterToken, keyword: String): Try<SearchResponse> {
-        val req = HttpRequest("${config.twitterHost}/1.1/search/tweets.json")
+        val req = HttpRequest("${config.host}/1.1/search/tweets.json")
                 .withParams(mapOf("q" to keyword))
                 .withTimeout(config.timeout)
                 .withOAuth2(token.value)
