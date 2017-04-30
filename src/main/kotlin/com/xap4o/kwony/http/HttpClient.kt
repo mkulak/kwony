@@ -18,7 +18,7 @@ import java.util.concurrent.CompletableFuture
 
 
 data class HttpRequest(
-        val url: String,
+        val url: URL,
         val method: HttpMethod = HttpMethod.GET,
         val params: Map<String, String> = emptyMap(),
         val body: HttpEntity = Empty,
@@ -61,10 +61,10 @@ class HttpClientImpl(vertx: Vertx) : HttpClient {
         fun handler(res: AsyncResult<HttpResponse<Buffer>>) {
             if (res.succeeded()) future.complete(res.result()) else future.completeExceptionally(res.cause())
         }
-        val url = URL(req.url)
-        val port = if (url.port == -1) url.defaultPort else url.port
-        val client = if (url.protocol == "https") httpsWebClient else webClient
-        val vertxReq = client.request(req.method, port, url.host, url.path)
+
+        val port = if (req.url.port == -1) req.url.defaultPort else req.url.port
+        val client = if (req.url.protocol == "https") httpsWebClient else webClient
+        val vertxReq = client.request(req.method, port, req.url.host, req.url.path)
 //        vertxReq.ssl(url.protocol == "https")
         vertxReq.timeout(req.timeout.toMillis())
         req.params.forEach { (name, value) -> vertxReq.addQueryParam(name, value) }

@@ -7,6 +7,7 @@ import com.xap4o.kwony.http.Json
 import com.xap4o.kwony.http.json
 import com.xap4o.kwony.twitter.Tweet
 import com.xap4o.kwony.utils.Try
+import com.xap4o.kwony.utils.withPath
 import io.vertx.core.http.HttpMethod
 
 interface AnalyzerClient {
@@ -16,7 +17,7 @@ interface AnalyzerClient {
 class AnalyzerClientImpl(val config: AnalyzeConfig, val http: HttpClient) : AnalyzerClient {
 
     override suspend fun analyze(tweet: Tweet): Try<Boolean> {
-        val req = HttpRequest("${config.host}/analyze", HttpMethod.POST)
+        val req = HttpRequest(config.host.withPath("/analyze"), HttpMethod.POST)
                 .withBody(Json(tweet))
                 .withTimeout(config.timeout)
         return http.json<Boolean>(req).withErrorMessage("Failed to analyze tweet $tweet")

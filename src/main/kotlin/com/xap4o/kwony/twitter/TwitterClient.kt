@@ -7,6 +7,7 @@ import com.xap4o.kwony.http.HttpRequest
 import com.xap4o.kwony.http.json
 import com.xap4o.kwony.utils.Logging
 import com.xap4o.kwony.utils.Try
+import com.xap4o.kwony.utils.withPath
 import io.vertx.core.http.HttpMethod
 
 
@@ -19,7 +20,7 @@ class TwitterClientImpl(val config: TwitterConfig, val http: HttpClient) : Twitt
 
     override suspend fun open(): Try<TwitterToken> = //TODO MK: cache token
             Try {
-                val req = HttpRequest("${config.host}/oauth2/token", HttpMethod.POST)
+                val req = HttpRequest(config.host.withPath("/oauth2/token"), HttpMethod.POST)
                         .withBody(Form(mapOf("grant_type" to "client_credentials")))
                         .withTimeout(config.timeout)
                         .withBasicAuth(config.key, config.secret)
@@ -29,7 +30,7 @@ class TwitterClientImpl(val config: TwitterConfig, val http: HttpClient) : Twitt
             }
 
     override suspend fun search(token: TwitterToken, keyword: String): Try<SearchResponse> {
-        val req = HttpRequest("${config.host}/1.1/search/tweets.json")
+        val req = HttpRequest(config.host.withPath("/1.1/search/tweets.json"))
                 .withParams(mapOf("q" to keyword))
                 .withTimeout(config.timeout)
                 .withOAuth2(token.value)

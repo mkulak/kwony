@@ -2,6 +2,7 @@ package com.xap4o.kwony.config
 
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigFactory
+import java.net.URL
 import java.time.Duration
 
 data class AppConfig(
@@ -11,19 +12,19 @@ data class AppConfig(
         val processing: ProcessingConfig,
         val db: DbConfig)
 
-data class HttpConfig(val host: String)
+data class HttpConfig(val host: URL)
 
 data class DbConfig(val url: String, val user: String, val password: String, val fullConfig: Config)
 
 data class TwitterConfig(
-        val host: String,
+        val host: URL,
         val key: String,
         val secret: String,
         val timeout: Duration
 )
 
 data class AnalyzeConfig(
-        val host: String,
+        val host: URL,
         val timeout: Duration
 )
 
@@ -41,16 +42,16 @@ fun loadConfig(): AppConfig {
     val db = c.getConfig("db")
     return AppConfig(
             HttpConfig(
-                    http.getString("host")
+                    http.getUrl("host")
             ),
             TwitterConfig(
-                    twitter.getString("host"),
+                    twitter.getUrl("host"),
                     twitter.getString("key"),
                     twitter.getString("secret"),
                     twitter.getDuration("timeout")
             ),
             AnalyzeConfig(
-                    analyze.getString("host"),
+                    analyze.getUrl("host"),
                     analyze.getDuration("timeout")
             ),
             ProcessingConfig(
@@ -64,4 +65,6 @@ fun loadConfig(): AppConfig {
             )
     )
 }
+
+fun Config.getUrl(path: String) = URL(getString(path))
 

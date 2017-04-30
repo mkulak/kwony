@@ -8,10 +8,7 @@ import io.vertx.ext.web.Router
 import java.net.URL
 import java.util.Base64
 
-fun HttpServer.start(router: Router, host: String) {
-    val url = URL(host)
-    requestHandler(router::accept).listen(url.port, url.host)
-}
+fun HttpServer.start(router: Router, url: URL) = requestHandler(router::accept).listen(url.port, url.host)
 
 fun HttpServerResponse.endWithJson(obj: Any) {
     putHeader("Content-Type", "application/json; charset=utf-8").end(Json.encodePrettily(obj))
@@ -27,5 +24,7 @@ fun basicAuthHeader(name: String, password: String): Pair<String, String> =
 
 fun oauth2Header(token: String): Pair<String, String> =
         "Authorization" to "Bearer $token"
+
+fun URL.withPath(path: String): URL = URL("$this$path")
 
 
