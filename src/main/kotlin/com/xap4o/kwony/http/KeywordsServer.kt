@@ -2,12 +2,13 @@ package com.xap4o.kwony.http
 
 import com.xap4o.kwony.db.SearchKeywordsDb
 import com.xap4o.kwony.utils.endWithJson
+import io.vertx.core.Vertx
 import io.vertx.core.http.HttpMethod
 import io.vertx.ext.web.Router
 
 class KeywordsServer(val keywordsDb: SearchKeywordsDb) {
-    fun api(router: Router): Router =
-            router.apply {
+    fun api(vertx: Vertx): Router =
+            Router.router(vertx).apply {
                 route(HttpMethod.GET, "/search_keywords").handler { context ->
                     context.response().endWithJson(keywordsDb.getAll().orDie())
                 }

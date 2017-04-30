@@ -40,8 +40,8 @@ fun main(args: Array<String>): Unit {
     val mainProcessing = MainProcessing(job, resultsDb, keywordsDb)
 
     val router = Router.router(vertx)
-    AnalyzerServer.api(router)
-    KeywordsServer(keywordsDb).api(router)
+    router.mountSubRouter("/", AnalyzerServer.api(vertx))
+    router.mountSubRouter("/", KeywordsServer(keywordsDb).api(vertx))
 
     Scheduling.schedule(config.processing.interval, mainProcessing::process)
 
