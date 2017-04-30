@@ -26,11 +26,11 @@ class PeriodicProcessing(
 
     private fun process(): Unit {
         launch(CommonPool) {
-            try {
-                val results = keywordsDb.getAll().map { keyword -> job.process(keyword) }
+            Try {
+                val results = keywordsDb.getAll().orDie().map { keyword -> job.process(keyword) }
                 handleResults(results)
-            } catch(e: Exception) {
-                LOG.error("Unexpected exception: ", e)
+            }.onError {
+                LOG.error("Unexpected exception: ", it)
             }
         }
     }
@@ -40,7 +40,7 @@ class PeriodicProcessing(
             when (it) {
                 is Success -> {
                     LOG.info(it.value.toString())
-                    resultDb.persist(it.value)
+                    resultDb.persist(it.value).orDie()
                 }
                 is Failure ->
                     LOG.error("Error while processing:", it.error)

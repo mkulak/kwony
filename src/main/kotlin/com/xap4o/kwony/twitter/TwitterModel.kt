@@ -3,6 +3,8 @@ package com.xap4o.kwony.twitter
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 
+data class TwitterToken(val value: String)
+
 data class AuthResponse(
     @JsonProperty("token_type") val tokenType: String,
     @JsonProperty("access_token") val accessToken: String

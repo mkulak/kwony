@@ -1,5 +1,7 @@
 package com.xap4o.kwony.http
 
+import com.xap4o.kwony.utils.Try
+import com.xap4o.kwony.utils.await
 import com.xap4o.kwony.utils.basicAuthHeader
 import com.xap4o.kwony.utils.oauth2Header
 import com.xap4o.kwony.utils.toMultiMap
@@ -47,14 +49,14 @@ object Empty : HttpEntity() {
 
 
 interface HttpClient {
-    fun execute(req: HttpRequest): CompletableFuture<HttpResponse<Buffer>>
+    suspend fun execute(req: HttpRequest): Try<HttpResponse<Buffer>>
 }
 
 class HttpClientImpl(vertx: Vertx) : HttpClient {
     val webClient = WebClient.create(vertx)
     val httpsWebClient = WebClient.create(vertx, WebClientOptions().setSsl(true))
 
-    override fun execute(req: HttpRequest): CompletableFuture<HttpResponse<Buffer>> {
+    override suspend fun execute(req: HttpRequest): Try<HttpResponse<Buffer>> {
         val future = CompletableFuture<HttpResponse<Buffer>>()
         fun handler(res: AsyncResult<HttpResponse<Buffer>>) {
             if (res.succeeded()) future.complete(res.result()) else future.completeExceptionally(res.cause())
@@ -72,7 +74,18 @@ class HttpClientImpl(vertx: Vertx) : HttpClient {
             is Json -> vertxReq.sendJson(req.body.payload, ::handler)
             is Form -> vertxReq.sendForm(req.body.params.toMultiMap(), ::handler)
         }
-        return future
+        return future.await()
     }
 }
+
+suspend fun HttpClient.expect(req: HttpRequest): Try<HttpResponse<Buffer>> =
+        Try {
+            val result = execute(req).orDie()
+            if (result.statusCode() in 200..299) result
+            else throw RuntimeException("Unexpected return code: ${result.statusCode()}")
+        }
+
+inline suspend fun <reified T> HttpClient.json(req: HttpRequest): Try<T> =
+        expect(req).map { it.bodyAsJson(T::class.java) }
+
 

@@ -9,16 +9,16 @@ class KeywordsServer(val keywordsDb: SearchKeywordsDb) {
     fun api(router: Router): Router =
             router.apply {
                 route(HttpMethod.GET, "/search_keywords").handler { context ->
-                    context.response().endWithJson(keywordsDb.getAll())
+                    context.response().endWithJson(keywordsDb.getAll().orDie())
                 }
                 route(HttpMethod.POST, "/search_keywords").handler { context ->
                     val keyword = context.request().getParam("keyword")
-                    keywordsDb.persist(keyword)
+                    keywordsDb.persist(keyword).orDie()
                     context.response().endWithJson("done")
                 }
                 route(HttpMethod.DELETE, "/search_keywords").handler { context ->
                     val keyword = context.request().getParam("keyword")
-                    keywordsDb.delete(keyword)
+                    keywordsDb.delete(keyword).orDie()
                     context.response().endWithJson("done")
                 }
             }
