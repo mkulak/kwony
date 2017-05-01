@@ -1,6 +1,6 @@
 * write tests
 * streaming?
-* url in config
+* beautify http api?
 
 
 Hey

@@ -6,6 +6,7 @@ import com.xap4o.kwony.utils.Failure
 import com.xap4o.kwony.utils.Logging
 import com.xap4o.kwony.utils.Success
 import com.xap4o.kwony.utils.Try
+import com.xap4o.kwony.utils.prettyPrint
 import kotlinx.coroutines.experimental.CommonPool
 import kotlinx.coroutines.experimental.launch
 
@@ -30,7 +31,7 @@ class MainProcessing(
                     resultDb.persist(it.value).orDie()
                 }
                 is Failure ->
-                    LOG.error("Error while processing:", it.error)
+                    LOG.error("Error while processing: ${it.error.prettyPrint()}")
             }
         }
     }

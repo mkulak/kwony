@@ -48,3 +48,8 @@ data class Success<A>(val value: A) : Try<A>() {
 data class Failure<A>(val error: Throwable) : Try<A>() {
     override fun isSuccess() = false
 }
+
+fun Throwable.prettyPrint(): String {
+    fun unwind(t: Throwable?, acc: List<Throwable>): List<Throwable> = if (t == null) acc else unwind(t.cause, acc + t)
+    return unwind(this, arrayListOf()).map { "${it.javaClass.simpleName}: ${it.message}"}.joinToString(" <- ")
+}
