@@ -2,12 +2,6 @@
 * streaming?
 * beautify http api?
 
-
-Hey
-I'm thinking of giving a talk about coroutines on next Kotlin Meetup (10-15 minutes live coding session).
-But I found out that next meetup will be special because of Jetbrains talks. Maybe I should postpone my talk (people will be overwhelmed with info anyway).
-What do you think?
-
 typealias CreateTimer = () -> () -> Long
 
 object Timer {
@@ -52,3 +46,32 @@ Mouse over + results in blinking hint
         }
         return a + 1
     }
+
+
+//what is stack, frame lifecycle
+
+fun foo() {
+    val a = 10
+    val b = "..."
+    bar(b.size + a)
+}
+
+fun bar(c: Int) {
+    val d = 25
+    return c * d
+}
+
+//how coroutines allows to "step out" of the frame saving it's state and then resume later.
+//interface Continuation<T> { //simplified for bravity
+//    fun resume(value: T)
+//    fun resumeWithException(exception: Throwable)
+//}
+//coroutines are not necessarily async!
+
+//example generator in python
+//simple generator in Kotlin without coroutines
+//adding coroutines
+
+//bonus: make it extend iterator
+//bonus: make lazy tree traversal?
+//bonus: talk about continuing coroutine execution with result (compiler magic!)
