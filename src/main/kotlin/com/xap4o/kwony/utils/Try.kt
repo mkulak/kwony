@@ -16,6 +16,11 @@ sealed class Try<A> {
         is Failure -> Failure(error)
     }
 
+    fun filter(p: (A) -> Boolean) = when (this) {
+        is Success -> if (p(value)) this else Failure(NoSuchElementException("Predicate does not hold for $value"))
+        is Failure -> this
+    }
+
     fun <B> flatMap(f: (A) -> Try<B>): Try<B> = when (this) {
         is Success -> f(value)
         is Failure -> Failure(error)

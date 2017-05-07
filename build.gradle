@@ -43,7 +43,7 @@ dependencies {
     compile "com.fasterxml.jackson.module:jackson-module-kotlin:2.8.7"
     compile "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml:2.8.7"
     testCompile "junit:junit:4.11"
-    testCompile "org.jetbrains.kotlin:kotlin-test-junit:$kotlin_version"
+    testCompile "org.assertj:assertj-core:3.6.1"
 }
 
 kotlin {

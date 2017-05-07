@@ -5,16 +5,18 @@ import com.xap4o.kwony.utils.await
 import com.xap4o.kwony.utils.basicAuthHeader
 import com.xap4o.kwony.utils.oauth2Header
 import com.xap4o.kwony.utils.toMultiMap
+import com.xap4o.kwony.utils.toNormalMap
 import io.vertx.core.AsyncResult
 import io.vertx.core.Vertx
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpMethod
-import io.vertx.ext.web.client.HttpResponse
 import io.vertx.ext.web.client.WebClient
 import io.vertx.ext.web.client.WebClientOptions
+import io.vertx.ext.web.codec.impl.BodyCodecImpl
 import java.net.URL
 import java.time.Duration
 import java.util.concurrent.CompletableFuture
+import io.vertx.ext.web.client.HttpResponse as VxHttpResponse
 
 
 data class HttpRequest(
@@ -41,25 +43,42 @@ data class HttpRequest(
 }
 
 sealed class HttpEntity
+
 data class Form(val params: Map<String, String>) : HttpEntity()
+
 data class Json(val payload: Any) : HttpEntity()
+
 object Empty : HttpEntity() {
+
     override fun toString() = "Empty"
 }
 
+data class HttpResponse(
+        val statusCode: Int,
+        val headers: Map<String, String> = emptyMap(),
+        val body: Buffer
+)
 
 interface HttpClient {
-    suspend fun execute(req: HttpRequest): Try<HttpResponse<Buffer>>
+
+//    suspend fun executeRaw(req: HttpRequest): Try<VxHttpResponse<Buffer>>
+
+    suspend fun execute(req: HttpRequest): Try<HttpResponse>
+
+    suspend fun expect(req: HttpRequest): Try<HttpResponse> = execute(req).filter { it.statusCode in 200..299 }
 }
 
 class HttpClientImpl(vertx: Vertx) : HttpClient {
     val webClient = WebClient.create(vertx)
     val httpsWebClient = WebClient.create(vertx, WebClientOptions().setSsl(true))
 
-    override suspend fun execute(req: HttpRequest): Try<HttpResponse<Buffer>> {
-        val future = CompletableFuture<HttpResponse<Buffer>>()
-        fun handler(res: AsyncResult<HttpResponse<Buffer>>) {
-            if (res.succeeded()) future.complete(res.result()) else future.completeExceptionally(res.cause())
+    private suspend fun executeRaw(req: HttpRequest): Try<VxHttpResponse<Buffer>> {
+        val future = CompletableFuture<VxHttpResponse<Buffer>>()
+        fun handler(res: AsyncResult<VxHttpResponse<Buffer>>) {
+            if (res.succeeded())
+                future.complete(res.result())
+            else
+                future.completeExceptionally(res.cause())
         }
 
         val port = if (req.url.port == -1) req.url.defaultPort else req.url.port
@@ -76,16 +95,17 @@ class HttpClientImpl(vertx: Vertx) : HttpClient {
         }
         return future.await()
     }
+
+    suspend override fun execute(req: HttpRequest): Try<HttpResponse> = executeRaw(req).map(::convertResponse)
 }
 
-suspend fun HttpClient.expect(req: HttpRequest): Try<HttpResponse<Buffer>> =
-        Try {
-            val result = execute(req).orDie()
-            if (result.statusCode() in 200..299) result
-            else throw RuntimeException("Unexpected return code: ${result.statusCode()}")
-        }
 
 inline suspend fun <reified T> HttpClient.json(req: HttpRequest): Try<T> =
-        expect(req).map { it.bodyAsJson(T::class.java) }
+        expect(req).map { BodyCodecImpl.jsonDecoder<T>(T::class.java).apply(it.body) }
+
+fun convertResponse(vxResponse: VxHttpResponse<Buffer>): HttpResponse =
+        HttpResponse(vxResponse.statusCode(), vxResponse.headers().toNormalMap(), vxResponse.body())
+
+
 
 
