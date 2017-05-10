@@ -37,4 +37,5 @@ fun Router.routeWithBody(method: HttpMethod, path: String): Route {
     return route(method, path)
 }
 
+operator fun Router.plus(other: Router): Router = mountSubRouter("/", other)
 
