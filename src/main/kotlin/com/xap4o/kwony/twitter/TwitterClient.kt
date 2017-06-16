@@ -1,13 +1,9 @@
 package com.xap4o.kwony.twitter
 
 import com.xap4o.kwony.config.TwitterConfig
-import com.xap4o.kwony.http.Form
-import com.xap4o.kwony.http.HttpClient
-import com.xap4o.kwony.http.HttpRequest
-import com.xap4o.kwony.http.json
+import com.xap4o.kwony.http.*
 import com.xap4o.kwony.utils.Logging
 import com.xap4o.kwony.utils.Try
-import com.xap4o.kwony.utils.withPath
 import io.vertx.core.http.HttpMethod
 
 
@@ -21,7 +17,7 @@ class TwitterClientImpl(val config: TwitterConfig, val http: HttpClient) : Twitt
     override suspend fun open(): Try<TwitterToken> = //TODO MK: cache token
             Try {
                 val req = HttpRequest(config.host.withPath("/oauth2/token"), HttpMethod.POST)
-                        .withBody(Form(mapOf("grant_type" to "client_credentials")))
+                        .withBody(FormBody(mapOf("grant_type" to "client_credentials")))
                         .withTimeout(config.timeout)
                         .withBasicAuth(config.key, config.secret)
                         .withHeader("Content-Type" to "x-www-form-urlencoded; charset=utf-8")

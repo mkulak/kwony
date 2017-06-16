@@ -2,17 +2,11 @@ package com.xap4o.kwony.twitter
 
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.xap4o.kwony.config.TwitterConfig
-import com.xap4o.kwony.http.Form
-import com.xap4o.kwony.http.HttpClient
-import com.xap4o.kwony.http.HttpRequest
-import com.xap4o.kwony.http.HttpResponse
+import com.xap4o.kwony.http.*
 import com.xap4o.kwony.utils.Success
 import com.xap4o.kwony.utils.Try
-import io.vertx.core.buffer.impl.BufferFactoryImpl
 import io.vertx.core.http.HttpMethod
-import io.vertx.core.json.Json
-import io.vertx.core.json.JsonArray
-import io.vertx.core.json.JsonObject
+import io.vertx.core.json.*
 import kotlinx.coroutines.experimental.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.assertTrue
@@ -32,9 +26,10 @@ class TwitterClientImplTest {
             val mockHttpClient = TestHttpClient { req ->
                 assertThat(req.method).isEqualTo(HttpMethod.POST)
                 assertThat(req.url.toString()).isEqualTo("${config.host}/oauth2/token")
-                assertThat(req.body).isEqualTo(Form(mapOf("grant_type" to "client_credentials")))
+                assertThat(req.body).isEqualTo(FormBody(mapOf("grant_type" to "client_credentials")))
                 assertTrue(req.headers.containsKey("Authorization"))
-                JsonObject(mapOf("access_token" to "123", "token_type" to "t")).toResponse()
+                val body = JsonObject(mapOf("access_token" to "123", "token_type" to "t"))
+                Success(jsonResponse(body))
             }
             val twitterClient = TwitterClientImpl(config, mockHttpClient)
             val token = twitterClient.open()
@@ -51,7 +46,8 @@ class TwitterClientImplTest {
                 assertThat(req.url.toString()).isEqualTo("${config.host}/1.1/search/tweets.json")
                 assertThat(req.params["q"]).isEqualTo(keyword)
                 assertThat(req.headers["Authorization"]).endsWith(token)
-                JsonObject(mapOf("statuses" to JsonArray(), "search_metadata" to JsonObject(mapOf("count" to 0, "query" to keyword)))).toResponse()
+                val body = JsonObject(mapOf("statuses" to JsonArray(), "search_metadata" to JsonObject(mapOf("count" to 0, "query" to keyword))))
+                Success(jsonResponse(body))
             }
             val twitterClient = TwitterClientImpl(config, mockHttpClient)
 
@@ -63,11 +59,7 @@ class TwitterClientImplTest {
 }
 
 
-val bufferFactory = BufferFactoryImpl()
 
-fun JsonObject.toResponse(): Try<HttpResponse> {
-    return Success(HttpResponse(200, body = bufferFactory.buffer(Json.encodePrettily(this))))
-}
 
 class TestHttpClient(val f: (HttpRequest) -> Try<HttpResponse>) : HttpClient {
     suspend override fun execute(req: HttpRequest): Try<HttpResponse> = f(req)
