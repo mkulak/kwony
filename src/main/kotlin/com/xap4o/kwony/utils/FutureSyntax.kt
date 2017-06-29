@@ -32,6 +32,8 @@ fun <A, B> Future<A>.map(f: (A) -> B): Future<B> = thenApply(f)
 
 fun <A, B> Future<A>.flatMap(f: (A) -> Future<B>): Future<B> = thenCompose(f)
 
+fun <T> Future<T>.void(): Future<Unit> = map { Unit }
+
 fun <A> Future<A>.withErrorMessage(message: String): Future<A> {
     val future = Future<A>()
     handle { result, throwable ->
