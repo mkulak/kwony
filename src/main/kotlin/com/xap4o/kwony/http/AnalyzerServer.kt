@@ -1,15 +1,15 @@
 package com.xap4o.kwony.http
 
 import com.xap4o.kwony.utils.endWithJson
-import io.vertx.core.http.HttpMethod
-import io.vertx.ext.web.handler.BodyHandler
+import com.xap4o.kwony.utils.post
+import io.vertx.core.json.JsonObject
 
 object AnalyzerServer : HttpApi({
-    route(HttpMethod.POST, "/analyze").handler(BodyHandler.create())
-
-    route(HttpMethod.POST, "/analyze").handler { context ->
-        val tweetJson = context.bodyAsJson
-        context.response().endWithJson((tweetJson.getString("text").length % 2 == 0).toString())
+    post("/analyze") { ctx, request, response ->
+        request.bodyHandler { buffer ->
+            val tweetJson = JsonObject(buffer.toString())
+            response.endWithJson((tweetJson.getString("text").length % 2 == 0).toString())
+        }
     }
 })
 

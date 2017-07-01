@@ -5,7 +5,8 @@ import io.vertx.core.AsyncResult
 import io.vertx.core.Vertx
 import io.vertx.core.buffer.Buffer
 import io.vertx.core.http.HttpMethod
-import io.vertx.ext.web.client.*
+import io.vertx.ext.web.client.HttpResponse
+import io.vertx.ext.web.client.WebClient
 import java.net.URL
 import java.time.Duration
 
@@ -22,15 +23,19 @@ data class HttpRequest(
 
     fun withBody(body: HttpEntity) = copy(body = body)
 
-    fun withParams(params: Map<String, String>) = copy(params = params)
+    fun addParams(params: Map<String, String>) = copy(params = this.params + params)
 
-    fun withHeader(header: Pair<String, String>) = copy(headers = headers + header)
+    fun addParam(param: Pair<String, String>) = copy(params = params + param)
 
-    fun withBasicAuth(name: String, password: String) = withHeader(basicAuthHeader(name, password))
+    fun addHeaders(headers: Map<String, String>) = copy(headers = this.headers + headers)
+
+    fun addHeader(header: Pair<String, String>) = copy(headers = headers + header)
+
+    fun withBasicAuth(name: String, password: String) = addHeader(basicAuthHeader(name, password))
 
     fun withTimeout(timeout: Duration) = copy(timeout = timeout)
 
-    fun withOAuth2(token: String) = withHeader(oauth2Header(token))
+    fun withOAuth2(token: String) = addHeader(oauth2Header(token))
 }
 
 sealed class HttpEntity
@@ -49,8 +54,7 @@ interface HttpClient {
 }
 
 class HttpClientImpl(vertx: Vertx) : HttpClient {
-    val webClient = WebClient.create(vertx)
-    val httpsWebClient = WebClient.create(vertx, WebClientOptions().setSsl(true))
+    val client = WebClient.create(vertx)
 
     override fun execute(req: HttpRequest): Future<HttpResponse<Buffer>> {
         val future = Future<HttpResponse<Buffer>>()
@@ -59,9 +63,8 @@ class HttpClientImpl(vertx: Vertx) : HttpClient {
         }
 
         val port = if (req.url.port == -1) req.url.defaultPort else req.url.port
-        val client = if (req.url.protocol == "https") httpsWebClient else webClient
         val vertxReq = client.request(req.method, port, req.url.host, req.url.path)
-//        vertxReq.ssl(url.protocol == "https")
+        vertxReq.ssl(req.url.protocol == "https")
         vertxReq.timeout(req.timeout.toMillis())
         req.params.forEach { (name, value) -> vertxReq.addQueryParam(name, value) }
         req.headers.forEach { (name, value) -> vertxReq.putHeader(name, value) }

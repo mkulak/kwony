@@ -18,14 +18,14 @@ class TwitterClientImpl(val config: TwitterConfig, val http: HttpClient) : Twitt
                 .withBody(Form(mapOf("grant_type" to "client_credentials")))
                 .withTimeout(config.timeout)
                 .withBasicAuth(config.key, config.secret)
-                .withHeader("Content-Type" to "x-www-form-urlencoded; charset=utf-8")
+                .addHeader("Content-Type" to "x-www-form-urlencoded; charset=utf-8")
         return http.json<AuthResponse>(req).map { TwitterToken(it.accessToken) }
                 .withErrorMessage("Failed to get twitter token")
     }
 
     override fun search(token: TwitterToken, keyword: Keyword): Future<SearchResponse> {
         val req = HttpRequest(config.host.withPath("/1.1/search/tweets.json"))
-                .withParams(mapOf("q" to keyword.value))
+                .addParam("q" to keyword.value)
                 .withTimeout(config.timeout)
                 .withOAuth2(token.value)
         return http.json<SearchResponse>(req).withErrorMessage("Failed to search twitter for '$keyword'")
